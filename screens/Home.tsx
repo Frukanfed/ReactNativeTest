@@ -6,31 +6,53 @@ import {
   TextInput,
   Pressable,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { prependTodos, addTodo, toggleTodo } from '../store/todos';
+import {
+  prependTodos,
+  addTodo,
+  toggleTodo,
+  setStatus,
+  setFilter,
+} from '../store/todos';
 import { fetchTodos } from '../api-functions/fetchTodos';
 import Header from '../components/Header';
 import uuid from 'react-native-uuid';
-import CheckBox from '@react-native-community/checkbox';
 import TodoItem from '../components/TodoItem';
 
 const Home = () => {
   const [input, setInput] = useState('');
   const dispatch = useDispatch();
-  const todos = useSelector((state: RootState) => state.todos);
+
+  const {
+    items: todos,
+    status,
+    filter,
+  } = useSelector((state: RootState) => state.todos);
+
+  const filteredTodos = todos.filter(todo => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return !todo.completed;
+    if (filter === 'completed') return todo.completed;
+  });
 
   useEffect(() => {
     const load = async () => {
-      const remoteTodos = await fetchTodos();
+      try {
+        dispatch(setStatus('loading'));
+        const remoteTodos = await fetchTodos();
 
-      // ayni idlileri yeniden yazma
-      const existingIds = new Set(todos.map(todo => todo.id));
-      const newTodos = remoteTodos.filter(todo => !existingIds.has(todo.id));
+        const existingIds = new Set(todos.map(todo => todo.id));
+        const newTodos = remoteTodos
+          .map(todo => ({ ...todo, id: todo.id.toString() }))
+          .filter(todo => !existingIds.has(todo.id));
 
-      if (newTodos.length > 0) {
         dispatch(prependTodos(newTodos));
+        dispatch(setStatus('idle'));
+      } catch (e) {
+        dispatch(setStatus('error'));
       }
     };
 
@@ -39,18 +61,23 @@ const Home = () => {
 
   const handleAdd = () => {
     if (!input.trim()) return;
-    dispatch(
-      addTodo({
-        id: uuid.v4().toString(),
-        title: input.trim(),
-        completed: false,
-      }),
-    );
+
+    const newTodo = {
+      id: uuid.v4().toString(),
+      title: input.trim(),
+      completed: false,
+    };
+
+    dispatch(addTodo(newTodo));
     setInput('');
   };
 
   const handleToggle = (id: string) => {
     dispatch(toggleTodo(id));
+  };
+
+  const handleRetry = () => {
+    dispatch(setStatus('idle'));
   };
 
   const renderItem = ({ item }: any) => (
@@ -82,9 +109,48 @@ const Home = () => {
             )}
           </Pressable>
         </View>
+        <View style={styles.Filters}>
+          {['all', 'active', 'completed'].map(f => (
+            <Pressable
+              key={f}
+              style={[
+                styles.FilterButton,
+                filter === f && styles.FilterButtonActive,
+              ]}
+              onPress={() => dispatch(setFilter(f as any))}
+            >
+              <Text
+                style={[
+                  styles.FilterButtonText,
+                  filter === f && styles.FilterButtonTextActive,
+                ]}
+              >
+                {f === 'all' ? 'Tümü' : f === 'active' ? 'Aktif' : 'Tamamlanan'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {status === 'loading' && (
+          <ActivityIndicator size="large" color="#007AFF" />
+        )}
+
+        {status === 'error' && (
+          <View style={styles.Center}>
+            <Text style={styles.ErrorText}>Hata oluştu.</Text>
+            <Pressable onPress={handleRetry} style={styles.RetryButton}>
+              <Text style={styles.RetryText}>Tekrar Dene</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {filteredTodos.length === 0 && status === 'idle' && (
+          <View style={styles.Center}>
+            <Text>Görev yok.</Text>
+          </View>
+        )}
 
         <FlatList
-          data={todos}
+          data={filteredTodos}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 40 }}
@@ -127,14 +193,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 13,
   },
-  item: {
-    flexDirection: 'row',
+  Center: {
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: 20,
   },
-  title: {
-    fontSize: 16,
-    marginLeft: 10,
+  ErrorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  RetryButton: {
+    padding: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+  },
+  RetryText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  Filters: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 12,
+    gap: 8,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
+  },
+  FilterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#eee',
+  },
+  FilterButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  FilterButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#333',
+  },
+  FilterButtonTextActive: {
+    color: '#fff',
   },
 });
 
