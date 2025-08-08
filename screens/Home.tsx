@@ -16,6 +16,7 @@ import {
   toggleTodo,
   setStatus,
   setFilter,
+  deleteTodo,
 } from '../store/todos';
 import { fetchTodos } from '../api-functions/fetchTodos';
 import Header from '../components/Header';
@@ -78,6 +79,10 @@ const Home = () => {
     setInput('');
   };
 
+  const handleDelete = (id: string) => {
+    dispatch(deleteTodo(id));
+  };
+
   const handleToggle = (id: string) => {
     dispatch(toggleTodo(id));
   };
@@ -91,6 +96,7 @@ const Home = () => {
       title={item.title}
       completed={item.completed}
       onToggle={() => handleToggle(item.id)}
+      onDelete={() => handleDelete(item.id)}
     />
   );
 

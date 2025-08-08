@@ -33,6 +33,9 @@ const todosSlice = createSlice({
                 todo.completed = !todo.completed;
             }
         },
+        deleteTodo: (state, action: PayloadAction<string>) => {
+            state.items = state.items.filter(t => t.id !== action.payload);
+        },
         setFilter: (state, action: PayloadAction<'all' | 'active' | 'completed'>) => {
             state.filter = action.payload;
         },
@@ -46,6 +49,7 @@ export const {
     prependTodos,
     addTodo,
     toggleTodo,
+    deleteTodo,
     setFilter,
     setStatus,
 } = todosSlice.actions;
