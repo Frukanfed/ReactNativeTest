@@ -42,6 +42,11 @@ const todosSlice = createSlice({
         setStatus: (state, action: PayloadAction<'idle' | 'loading' | 'error'>) => {
             state.status = action.payload;
         },
+        resetTodos: (state) => {
+            state.items = [];
+            state.status = 'idle';
+            state.filter = 'all';
+        },
     },
 });
 
@@ -52,6 +57,7 @@ export const {
     deleteTodo,
     setFilter,
     setStatus,
+    resetTodos,
 } = todosSlice.actions;
 
 export default todosSlice.reducer;
