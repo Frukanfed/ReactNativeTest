@@ -19,10 +19,10 @@ export default function RootNavigator() {
       const username = await AsyncStorage.getItem('username');
       setInitialRoute(username ? 'Home' : 'Auth');
     };
+
     checkUsername();
   }, []);
 
-  //Loading
   if (!initialRoute) return null;
 
   return (
@@ -33,8 +33,8 @@ export default function RootNavigator() {
           component={Auth}
           options={{ headerShown: false }}
         />
-        {/* <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} /> */}
+        {/* <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Profile" component={Profile} /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );
