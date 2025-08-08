@@ -84,7 +84,7 @@ const Auth = ({ navigation }: Props) => {
         opacity.value = withTiming(1, { duration: 100 }, () => {
           runOnJS(flash)();
           setTimeout(() => {
-            //runOnJS(handleLogin)();
+            runOnJS(handleLogin)();
           }, 100);
         });
       });
@@ -105,7 +105,10 @@ const Auth = ({ navigation }: Props) => {
         onChangeText={setName}
       />
       <Animated.View style={[styles.Button, shakeStyle, animStyle]}>
-        <Pressable onPress={handleAnimatedLogin}>
+        <Pressable
+          onPress={handleAnimatedLogin}
+          accessibilityLabel="Devam Butonu"
+        >
           <Text style={styles.ButtonText}>Devam Et</Text>
         </Pressable>
       </Animated.View>
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 12,
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   },
   ErrorText: {
     color: 'red',
