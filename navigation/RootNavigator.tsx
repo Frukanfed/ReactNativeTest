@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../constants/Types';
 import Auth from '../screens/Auth';
-//import HomeScreen from '../screens/Home';
+import Home from '../screens/Home';
 //import ProfileScreen from '../screens/Profile';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,8 +33,8 @@ export default function RootNavigator() {
           component={Auth}
           options={{ headerShown: false }}
         />
-        {/* <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Profile" component={Profile} /> */}
+        <Stack.Screen name="Home" component={Home} />
+        {/* <Stack.Screen name="Profile" component={Profile} /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );

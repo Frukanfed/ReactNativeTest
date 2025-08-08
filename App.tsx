@@ -1,11 +1,14 @@
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-
 import React from 'react';
 import RootNavigator from './navigation/RootNavigator';
+import { Provider } from 'react-redux';
+import store from './store';
 
 const App = () => {
-  return <RootNavigator />;
+  return (
+    <Provider store={store}>
+      <RootNavigator />
+    </Provider>
+  );
 };
 
 export default App;

@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import {
-  View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,8 +15,12 @@ import Animated, {
   useAnimatedStyle,
   withSequence,
   withTiming,
+  withSpring,
+  Easing,
 } from 'react-native-reanimated';
-import { retry } from '@reduxjs/toolkit/query';
+import { useDispatch } from 'react-redux';
+import { setUsername } from '../store/user';
+import { runOnJS } from 'react-native-worklets';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Auth'>;
 
@@ -25,34 +28,67 @@ const Auth = ({ navigation }: Props) => {
   const [name, setName] = useState('');
   const [error, setError] = useState(false);
 
+  const dispatch = useDispatch();
+
   const shakeX = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const bgColor = useSharedValue('#007AFF');
+
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],
   }));
 
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+    backgroundColor: bgColor.value,
+  }));
+
   const triggerShake = () => {
     shakeX.value = withSequence(
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(0, { duration: 50 }),
+      withTiming(-8, { duration: 50, easing: Easing.ease }),
+      withTiming(8, { duration: 50, easing: Easing.ease }),
+      withTiming(-8, { duration: 50, easing: Easing.ease }),
+      withTiming(8, { duration: 50, easing: Easing.ease }),
+      withTiming(0, { duration: 50, easing: Easing.ease }),
     );
   };
 
+  const flash = () => {
+    bgColor.value = withTiming('#75b7ff', { duration: 180 }, () => {
+      bgColor.value = withTiming('#007AFF', { duration: 80 });
+    });
+  };
+
   const handleLogin = async () => {
+    dispatch(setUsername(name.trim()));
+    await AsyncStorage.setItem('username', name.trim());
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
+  };
+
+  const handleAnimatedLogin = () => {
     if (!name.trim()) {
       setError(true);
       triggerShake();
-
-      //3 saniye sonra error yazisi kaybolsun
-      setTimeout(() => {
-        setError(false);
-      }, 3000);
+      setTimeout(() => setError(false), 3000);
       return;
     }
-    await AsyncStorage.setItem('username', name.trim());
-    navigation.replace('Home');
+
+    scale.value = withSpring(0.97, undefined, () => {
+      scale.value = withSpring(1);
+      opacity.value = withTiming(0.9, { duration: 100 }, () => {
+        opacity.value = withTiming(1, { duration: 100 }, () => {
+          runOnJS(flash)();
+          setTimeout(() => {
+            //runOnJS(handleLogin)();
+          }, 100);
+        });
+      });
+    });
   };
 
   return (
@@ -68,21 +104,22 @@ const Auth = ({ navigation }: Props) => {
         value={name}
         onChangeText={setName}
       />
-      <Animated.View style={[styles.Button, shakeStyle]}>
-        <Button
-          title="Devam Et"
-          onPress={handleLogin}
-          accessibilityLabel="Devam et butonu"
-        />
+      <Animated.View style={[styles.Button, shakeStyle, animStyle]}>
+        <Pressable onPress={handleAnimatedLogin}>
+          <Text style={styles.ButtonText}>Devam Et</Text>
+        </Pressable>
       </Animated.View>
-
       {error && <Text style={styles.ErrorText}>Lütfen adınızı girin.</Text>}
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  Container: { flex: 1, justifyContent: 'center', padding: 20 },
+  Container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
   Label: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -99,6 +136,16 @@ const styles = StyleSheet.create({
   Button: {
     width: '30%',
     alignSelf: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#007AFF',
+  },
+  ButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    paddingVertical: 12,
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   ErrorText: {
     color: 'red',
