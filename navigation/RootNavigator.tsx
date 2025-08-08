@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../constants/Types';
 import Auth from '../screens/Auth';
 import Home from '../screens/Home';
-// import ProfileScreen from '../screens/Profile';
+import Profile from '../screens/Profile';
 import { useDispatch } from 'react-redux';
 import { setUsername } from '../store/user';
 
@@ -47,7 +47,7 @@ export default function RootNavigator() {
           component={Home}
           options={{ headerShown: false }}
         />
-        {/* <Stack.Screen name="Profile" component={ProfileScreen} /> */}
+        <Stack.Screen name="Profile" component={Profile} />
       </Stack.Navigator>
     </NavigationContainer>
   );

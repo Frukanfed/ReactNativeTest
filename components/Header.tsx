@@ -1,15 +1,20 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../constants/Types';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { opacity } from 'react-native-reanimated/lib/typescript/Colors';
 import { useSelector } from 'react-redux';
 
 const Header = () => {
   const username = useSelector((state: any) => state.user.name);
+  const navigation = useNavigation<NavigationProp>();
+
+  type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
   return (
     <View style={styles.Container}>
       <Text style={styles.Header}>Merhaba, {username}</Text>
 
-      <Pressable onPress={() => {}}>
+      <Pressable onPress={() => navigation.navigate('Profile')}>
         {({ pressed }) => (
           <Image
             source={require('../assets/user.png')}
@@ -26,14 +31,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: 'gray',
-    backgroundColor: '#bfbdbd',
+    backgroundColor: '#ffffff',
     borderBottomRightRadius: 4,
     borderBottomLeftRadius: 4,
   },
   Header: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   UserIcon: {
