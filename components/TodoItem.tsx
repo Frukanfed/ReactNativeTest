@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 
-interface Props {
+type Props = {
   title: string;
   completed: boolean;
   onToggle: () => void;
-}
+};
 
 const TodoItem = ({ title, completed, onToggle }: Props) => {
   return (
@@ -39,7 +39,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
+    marginLeft: 10,
   },
 });
 
-export default TodoItem;
+//sadece proplar degisir ise rerenderle
+export default React.memo(TodoItem, (prev, next) => {
+  return prev.title === next.title && prev.completed === next.completed;
+});

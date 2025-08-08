@@ -153,6 +153,12 @@ const Home = () => {
           data={filteredTodos}
           keyExtractor={item => item.id}
           renderItem={renderItem}
+          getItemLayout={(_, index) => ({
+            length: 60,
+            offset: 60 * index,
+            index,
+          })}
+          removeClippedSubviews={true}
           contentContainerStyle={{ paddingBottom: 40 }}
         />
       </View>
