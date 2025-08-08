@@ -27,11 +27,13 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 const Home = () => {
   const [input, setInput] = useState('');
   const dispatch = useDispatch();
   const opacity = useSharedValue(1);
+  const colors = useThemeColors();
 
   const {
     items: todos,
@@ -108,6 +110,8 @@ const Home = () => {
   const fadeStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
+
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.Container}>
@@ -188,81 +192,86 @@ const Home = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  Container: {
-    flex: 1,
-  },
-  Body: {
-    flex: 1,
-    padding: 20,
-  },
-  NewTodo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  Input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    fontSize: 14,
-    padding: 10,
-    flex: 1,
-    marginRight: 8,
-  },
-  NewTodoButton: {
-    borderRadius: 6,
-    backgroundColor: '#007AFF',
-  },
-  ButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  Center: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  ErrorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  RetryButton: {
-    padding: 10,
-    backgroundColor: '#007AFF',
-    borderRadius: 6,
-  },
-  RetryText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  Filters: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginVertical: 12,
-    gap: 8,
-    borderBottomWidth: 1,
-    paddingBottom: 10,
-  },
-  FilterButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#eee',
-  },
-  FilterButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  FilterButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#333',
-  },
-  FilterButtonTextActive: {
-    color: '#fff',
-  },
-});
+const createStyles = (colors: Record<string, string>) =>
+  StyleSheet.create({
+    Container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    Body: {
+      flex: 1,
+      padding: 20,
+    },
+    NewTodo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    Input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+      fontSize: 14,
+      padding: 10,
+      flex: 1,
+      marginRight: 8,
+      color: colors.text,
+      backgroundColor: colors.card,
+    },
+    NewTodoButton: {
+      borderRadius: 6,
+      backgroundColor: '#007AFF',
+    },
+    ButtonText: {
+      color: 'white',
+      textAlign: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontWeight: 'bold',
+      fontSize: 13,
+    },
+    Center: {
+      alignItems: 'center',
+      marginVertical: 20,
+    },
+    ErrorText: {
+      color: 'red',
+      marginBottom: 10,
+    },
+    RetryButton: {
+      padding: 10,
+      backgroundColor: '#007AFF',
+      borderRadius: 6,
+    },
+    RetryText: {
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    Filters: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginVertical: 12,
+      gap: 8,
+      borderBottomWidth: 1,
+      paddingBottom: 10,
+      borderColor: colors.border,
+    },
+    FilterButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: '#eee',
+    },
+    FilterButtonActive: {
+      backgroundColor: '#007AFF',
+    },
+    FilterButtonText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: '#333',
+    },
+    FilterButtonTextActive: {
+      color: '#fff',
+    },
+  });
 
 export default Home;

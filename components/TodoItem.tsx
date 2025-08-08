@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import Animated, {
   FadeInRight,
@@ -6,12 +6,14 @@ import Animated, {
   LinearTransition,
   useAnimatedStyle,
   withTiming,
-  useSharedValue,
   withDelay,
+  useSharedValue,
+  interpolateColor,
 } from 'react-native-reanimated';
 import CheckBox from '@react-native-community/checkbox';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-worklets';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface Props {
   title: string;
@@ -23,15 +25,29 @@ interface Props {
 const SWIPE_THRESHOLD = 80;
 
 const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
+  const colors = useThemeColors();
+
+  // motion values
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-  const background = useSharedValue('white');
+
+  const baseBg = useSharedValue(colors.card);
+  const flash = useSharedValue(0);
+
+  // tema değiş
+  useEffect(() => {
+    baseBg.value = colors.card;
+  }, [colors.card]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
-    backgroundColor: background.value,
     opacity: opacity.value,
+    backgroundColor: interpolateColor(
+      flash.value,
+      [0, 1],
+      [baseBg.value, '#C8E6C9'],
+    ),
   }));
 
   const checkboxStyle = useAnimatedStyle(() => ({
@@ -43,20 +59,18 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
       translateX.value = e.translationX;
     })
     .onEnd(() => {
-      // Sağa kaydırınca tamamla
+      // sağa kaydır ve tamamla
       if (translateX.value > SWIPE_THRESHOLD) {
-        background.value = '#C8E6C9';
-
         scale.value = withTiming(1.2, {}, () => {
           scale.value = withTiming(1);
         });
 
+        flash.value = 1;
+        flash.value = withDelay(200, withTiming(0));
+
         runOnJS(onToggle)();
-
-        background.value = withDelay(200, withTiming('white'));
       }
-
-      // Sola kaydırınca sil
+      // sola kaydır ve sil
       else if (translateX.value < -SWIPE_THRESHOLD) {
         translateX.value = withTiming(-1000, { duration: 250 });
         opacity.value = withTiming(0, { duration: 250 }, () => {
@@ -65,7 +79,7 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
         return;
       }
 
-      // Geri yerine getir
+      // geri yerine
       translateX.value = withTiming(0);
     });
 
@@ -81,16 +95,15 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
           <CheckBox
             value={completed}
             onValueChange={() => runOnJS(onToggle)()}
-            tintColors={{ true: '#4CAF50', false: '#aaa' }}
+            tintColors={{ true: '#4CAF50', false: colors.border }}
           />
         </Animated.View>
+
         <Text
           style={[
             styles.title,
-            completed && {
-              textDecorationLine: 'line-through',
-              opacity: 0.6,
-            },
+            { color: colors.text },
+            completed && { textDecorationLine: 'line-through', opacity: 0.6 },
           ]}
         >
           {title}
@@ -107,7 +120,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     padding: 10,
     borderRadius: 8,
-    backgroundColor: 'white',
   },
   title: {
     fontSize: 16,
