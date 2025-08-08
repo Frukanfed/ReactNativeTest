@@ -21,12 +21,14 @@ import Animated, {
 import { useDispatch } from 'react-redux';
 import { setUsername } from '../store/user';
 import { runOnJS } from 'react-native-worklets';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Auth'>;
 
 const Auth = ({ navigation }: Props) => {
   const [name, setName] = useState('');
   const [error, setError] = useState(false);
+  const colors = useThemeColors();
 
   const dispatch = useDispatch();
 
@@ -91,6 +93,7 @@ const Auth = ({ navigation }: Props) => {
     });
   };
 
+  const styles = createStyles(colors);
   return (
     <KeyboardAvoidingView
       style={styles.Container}
@@ -101,6 +104,7 @@ const Auth = ({ navigation }: Props) => {
         style={styles.Input}
         returnKeyType="done"
         placeholder="Ad Soyad"
+        placeholderTextColor={colors.text + '99'}
         value={name}
         onChangeText={setName}
       />
@@ -117,44 +121,48 @@ const Auth = ({ navigation }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
-  Container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  Label: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    paddingBottom: 50,
-    textAlign: 'center',
-  },
-  Input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 20,
-  },
-  Button: {
-    width: '30%',
-    alignSelf: 'center',
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#007AFF',
-  },
-  ButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    paddingVertical: 12,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  ErrorText: {
-    color: 'red',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-});
+const createStyles = (colors: Record<string, string>) =>
+  StyleSheet.create({
+    Container: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: 20,
+      backgroundColor: colors.background,
+    },
+    Label: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      paddingBottom: 50,
+      textAlign: 'center',
+      color: colors.text,
+    },
+    Input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+      padding: 12,
+      marginBottom: 20,
+      color: colors.text,
+    },
+    Button: {
+      width: '30%',
+      alignSelf: 'center',
+      borderRadius: 8,
+      overflow: 'hidden',
+      backgroundColor: '#007AFF',
+    },
+    ButtonText: {
+      color: 'white',
+      textAlign: 'center',
+      paddingVertical: 12,
+      fontWeight: 'bold',
+      fontSize: 14,
+    },
+    ErrorText: {
+      color: 'red',
+      marginTop: 8,
+      textAlign: 'center',
+    },
+  });
 
 export default Auth;

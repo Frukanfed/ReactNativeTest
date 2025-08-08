@@ -122,6 +122,7 @@ const Home = () => {
             style={styles.Input}
             returnKeyType="done"
             placeholder="Yeni görev..."
+            placeholderTextColor={colors.text + '99'}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={handleAdd}
@@ -214,8 +215,8 @@ const createStyles = (colors: Record<string, string>) =>
       padding: 10,
       flex: 1,
       marginRight: 8,
-      color: colors.text,
       backgroundColor: colors.card,
+      color: colors.text,
     },
     NewTodoButton: {
       borderRadius: 6,
