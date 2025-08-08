@@ -1,16 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
+import Animated, {
+  FadeIn,
+  FadeOutUp,
+  LinearTransition,
+} from 'react-native-reanimated';
 
-type Props = {
+interface Props {
   title: string;
   completed: boolean;
   onToggle: () => void;
-};
+}
 
 const TodoItem = ({ title, completed, onToggle }: Props) => {
   return (
-    <View style={styles.item}>
+    <Animated.View
+      layout={LinearTransition}
+      entering={FadeIn}
+      exiting={FadeOutUp}
+      style={styles.item}
+    >
       <CheckBox
         value={completed}
         onValueChange={onToggle}
@@ -27,7 +37,7 @@ const TodoItem = ({ title, completed, onToggle }: Props) => {
       >
         {title}
       </Text>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -44,6 +54,8 @@ const styles = StyleSheet.create({
 });
 
 //sadece proplar degisir ise rerenderle
-export default React.memo(TodoItem, (prev, next) => {
-  return prev.title === next.title && prev.completed === next.completed;
-});
+export default React.memo(
+  TodoItem,
+  (prev, next) =>
+    prev.title === next.title && prev.completed === next.completed,
+);

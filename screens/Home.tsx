@@ -21,10 +21,16 @@ import { fetchTodos } from '../api-functions/fetchTodos';
 import Header from '../components/Header';
 import uuid from 'react-native-uuid';
 import TodoItem from '../components/TodoItem';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 
 const Home = () => {
   const [input, setInput] = useState('');
   const dispatch = useDispatch();
+  const opacity = useSharedValue(1);
 
   const {
     items: todos,
@@ -88,6 +94,15 @@ const Home = () => {
     />
   );
 
+  useEffect(() => {
+    opacity.value = withTiming(0, { duration: 40 }, () => {
+      opacity.value = withTiming(1, { duration: 260 });
+    });
+  }, [filter]);
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
   return (
     <View style={styles.Container}>
       <Header />
@@ -148,19 +163,20 @@ const Home = () => {
             <Text>Görev yok.</Text>
           </View>
         )}
-
-        <FlatList
-          data={filteredTodos}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          getItemLayout={(_, index) => ({
-            length: 60,
-            offset: 60 * index,
-            index,
-          })}
-          removeClippedSubviews={true}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        />
+        <Animated.View style={[{ flex: 1 }, fadeStyle]}>
+          <FlatList
+            data={filteredTodos}
+            keyExtractor={item => item.id}
+            renderItem={renderItem}
+            getItemLayout={(_, index) => ({
+              length: 60,
+              offset: 60 * index,
+              index,
+            })}
+            removeClippedSubviews={true}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          />
+        </Animated.View>
       </View>
     </View>
   );
