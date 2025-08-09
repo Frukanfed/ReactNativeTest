@@ -16,6 +16,6 @@ export const fetchTodos = async (): Promise<Todo[]> => {
     return normalized;
   } catch (error) {
     console.error('API fetch error:', error);
-    return [];
+    throw error;
   }
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -32,7 +32,6 @@ import { useThemeColors } from '../hooks/useThemeColors';
 const Home = () => {
   const [input, setInput] = useState('');
   const dispatch = useDispatch();
-  const opacity = useSharedValue(1);
   const colors = useThemeColors();
 
   const {
@@ -44,54 +43,68 @@ const Home = () => {
   const filteredTodos = todos.filter(todo => {
     if (filter === 'all') return true;
     if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
+    return todo.completed;
   });
 
+  const todosRef = useRef(todos);
   useEffect(() => {
-    const load = async () => {
-      try {
-        dispatch(setStatus('loading'));
-        const remoteTodos = await fetchTodos();
+    todosRef.current = todos; // her değişimde günceli sakla
+  }, [todos]);
 
-        const existingIds = new Set(todos.map(todo => todo.id));
-        const newTodos = remoteTodos
-          .map(todo => ({ ...todo, id: todo.id.toString() }))
-          .filter(todo => !existingIds.has(todo.id));
+  const loadTodos = useCallback(async () => {
+    try {
+      dispatch(setStatus('loading'));
+      const remoteTodos = await fetchTodos();
 
-        dispatch(prependTodos(newTodos));
-        dispatch(setStatus('idle'));
-      } catch (e) {
-        dispatch(setStatus('error'));
-      }
-    };
+      const existingIds = new Set(todosRef.current.map(t => t.id));
+      const newTodos = remoteTodos
+        .map(t => ({ ...t, id: t.id.toString() }))
+        .filter(t => !existingIds.has(t.id));
 
-    load();
-  }, []);
+      dispatch(prependTodos(newTodos));
+      dispatch(setStatus('idle'));
+    } catch {
+      dispatch(setStatus('error'));
+    }
+  }, [dispatch]);
+
+  const didFetch = useRef(false);
+  useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+    loadTodos();
+  }, [loadTodos]);
+
+  useEffect(() => {
+    loadTodos();
+  }, [loadTodos]);
 
   const handleAdd = () => {
     if (!input.trim()) return;
-
-    const newTodo = {
-      id: uuid.v4().toString(),
-      title: input.trim(),
-      completed: false,
-    };
-
-    dispatch(addTodo(newTodo));
+    dispatch(
+      addTodo({
+        id: uuid.v4().toString(),
+        title: input.trim(),
+        completed: false,
+      }),
+    );
     setInput('');
   };
 
-  const handleDelete = (id: string) => {
-    dispatch(deleteTodo(id));
-  };
+  const handleToggle = (id: string) => dispatch(toggleTodo(id));
+  const handleDelete = (id: string) => dispatch(deleteTodo(id));
+  const handleRetry = () => loadTodos();
 
-  const handleToggle = (id: string) => {
-    dispatch(toggleTodo(id));
-  };
+  const opacity = useSharedValue(1);
+  useEffect(() => {
+    opacity.value = withTiming(0, { duration: 80 }, () => {
+      opacity.value = withTiming(1, { duration: 240 });
+    });
+  }, [filter]);
 
-  const handleRetry = () => {
-    dispatch(setStatus('idle'));
-  };
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  const styles = createStyles(colors);
 
   const renderItem = ({ item }: any) => (
     <TodoItem
@@ -102,21 +115,11 @@ const Home = () => {
     />
   );
 
-  useEffect(() => {
-    opacity.value = withTiming(0, { duration: 40 }, () => {
-      opacity.value = withTiming(1, { duration: 260 });
-    });
-  }, [filter]);
-  const fadeStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
-  const styles = createStyles(colors);
-
   return (
     <View style={styles.Container}>
       <Header />
       <View style={styles.Body}>
+        {/* New Todo */}
         <View style={styles.NewTodo}>
           <TextInput
             style={styles.Input}
@@ -135,15 +138,17 @@ const Home = () => {
             )}
           </Pressable>
         </View>
+
+        {/* Filters */}
         <View style={styles.Filters}>
-          {['all', 'active', 'completed'].map(f => (
+          {(['all', 'active', 'completed'] as const).map(f => (
             <Pressable
               key={f}
               style={[
                 styles.FilterButton,
                 filter === f && styles.FilterButtonActive,
               ]}
-              onPress={() => dispatch(setFilter(f as any))}
+              onPress={() => dispatch(setFilter(f))}
             >
               <Text
                 style={[
@@ -156,38 +161,46 @@ const Home = () => {
             </Pressable>
           ))}
         </View>
+
+        {/* Loading */}
         {status === 'loading' && (
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={colors.button} />
         )}
 
+        {/* Error */}
         {status === 'error' && (
           <View style={styles.Center}>
-            <Text style={styles.ErrorText}>Hata oluştu.</Text>
+            <Text style={[styles.ErrorText, { color: colors.danger }]}>
+              Hata oluştu.
+            </Text>
             <Pressable onPress={handleRetry} style={styles.RetryButton}>
               <Text style={styles.RetryText}>Tekrar Dene</Text>
             </Pressable>
           </View>
         )}
 
-        {filteredTodos.length === 0 && status === 'idle' && (
-          <View style={styles.Center}>
-            <Text>Görev yok.</Text>
-          </View>
-        )}
-        <Animated.View style={[{ flex: 1 }, fadeStyle]}>
-          <FlatList
-            data={filteredTodos}
-            keyExtractor={item => item.id}
-            renderItem={renderItem}
-            getItemLayout={(_, index) => ({
-              length: 60,
-              offset: 60 * index,
-              index,
-            })}
-            removeClippedSubviews={true}
-            contentContainerStyle={{ paddingBottom: 40 }}
-          />
-        </Animated.View>
+        {/* Empty */}
+        {status === 'idle' &&
+          (filteredTodos.length === 0 ? (
+            <View style={styles.Center}>
+              <Text style={{ color: colors.text }}>Görev yok.</Text>
+            </View>
+          ) : (
+            <Animated.View style={[{ flex: 1 }, fadeStyle]}>
+              <FlatList
+                data={filteredTodos}
+                keyExtractor={item => item.id}
+                renderItem={renderItem}
+                getItemLayout={(_, index) => ({
+                  length: 60,
+                  offset: 60 * index,
+                  index,
+                })}
+                removeClippedSubviews
+                contentContainerStyle={{ paddingBottom: 40 }}
+              />
+            </Animated.View>
+          ))}
       </View>
     </View>
   );
@@ -220,7 +233,7 @@ const createStyles = (colors: Record<string, string>) =>
     },
     NewTodoButton: {
       borderRadius: 6,
-      backgroundColor: '#007AFF',
+      backgroundColor: colors.button,
     },
     ButtonText: {
       color: 'white',
@@ -235,12 +248,12 @@ const createStyles = (colors: Record<string, string>) =>
       marginVertical: 20,
     },
     ErrorText: {
-      color: 'red',
       marginBottom: 10,
+      fontWeight: '600',
     },
     RetryButton: {
       padding: 10,
-      backgroundColor: '#007AFF',
+      backgroundColor: colors.button,
       borderRadius: 6,
     },
     RetryText: {
@@ -260,15 +273,18 @@ const createStyles = (colors: Record<string, string>) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
-      backgroundColor: '#eee',
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     FilterButtonActive: {
-      backgroundColor: '#007AFF',
+      backgroundColor: colors.button,
+      borderColor: colors.button,
     },
     FilterButtonText: {
       fontSize: 13,
       fontWeight: '500',
-      color: '#333',
+      color: colors.text,
     },
     FilterButtonTextActive: {
       color: '#fff',
