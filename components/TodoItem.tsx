@@ -29,19 +29,19 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
 
   // motion values
   const translateX = useSharedValue(0);
-  const scale = useSharedValue(1);
+  const itemScale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
   const baseBg = useSharedValue(colors.card);
   const flash = useSharedValue(0);
 
-  // tema değiş
+  // tema değişince base rengi güncelle
   useEffect(() => {
     baseBg.value = colors.card;
   }, [colors.card]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: translateX.value }, { scale: itemScale.value }],
     opacity: opacity.value,
     backgroundColor: interpolateColor(
       flash.value,
@@ -50,8 +50,9 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
     ),
   }));
 
+  const checkboxBump = useSharedValue(1);
   const checkboxStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: checkboxBump.value }],
   }));
 
   const gesture = Gesture.Pan()
@@ -59,10 +60,10 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
       translateX.value = e.translationX;
     })
     .onEnd(() => {
-      // sağa kaydır ve tamamla
+      // sağa kaydır tamamla (kısa yeşil flash  checkbox bump)
       if (translateX.value > SWIPE_THRESHOLD) {
-        scale.value = withTiming(1.2, {}, () => {
-          scale.value = withTiming(1);
+        checkboxBump.value = withTiming(1.2, {}, () => {
+          checkboxBump.value = withTiming(1);
         });
 
         flash.value = 1;
@@ -70,8 +71,9 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
 
         runOnJS(onToggle)();
       }
-      // sola kaydır ve sil
+      // sola kaydır sil (throw-out fade shrink)
       else if (translateX.value < -SWIPE_THRESHOLD) {
+        itemScale.value = withTiming(0.9, { duration: 250 });
         translateX.value = withTiming(-1000, { duration: 250 });
         opacity.value = withTiming(0, { duration: 250 }, () => {
           runOnJS(onDelete)();
@@ -81,6 +83,7 @@ const TodoItem = ({ title, completed, onToggle, onDelete }: Props) => {
 
       // geri yerine
       translateX.value = withTiming(0);
+      itemScale.value = withTiming(1);
     });
 
   return (
